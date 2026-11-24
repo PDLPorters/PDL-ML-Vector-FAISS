@@ -5,8 +5,14 @@ use ExtUtils::MakeMaker;
 use ExtUtils::CppGuess;
 use PDL::Core::Dev;
 
+my $brew_prefix = '';
+if ($^O eq 'darwin') {
+    chomp($brew_prefix = `brew --prefix 2>/dev/null` || '');
+}
+my @inc_dirs = ('/usr/include', '/usr/local/include');
+push @inc_dirs, "$brew_prefix/include" if $brew_prefix;
 my $faiss_inc;
-for my $dir ('/usr/include', '/usr/local/include', '/opt/homebrew/include') {
+for my $dir (@inc_dirs) {
     if (-f "$dir/faiss/IndexFlat.h") {
         $faiss_inc = $dir;
         last;
@@ -15,7 +21,7 @@ for my $dir ('/usr/include', '/usr/local/include', '/opt/homebrew/include') {
 if (!$faiss_inc) {
     die "libfaiss-dev (faiss/IndexFlat.h) is required to build PDL::ML::Vector::FAISS.\n";
 }
-my $lib_flag = $faiss_inc =~ m{^/opt/homebrew} ? '-L/opt/homebrew/lib ' : '';
+my $lib_flag = ($brew_prefix && $faiss_inc && $faiss_inc =~ m{^\$brew_prefix}) ? "-L$brew_prefix/lib " : '';
 
 my $pdl_inc      = PDL::Core::Dev::PDL_INCLUDE();
 my $guess        = ExtUtils::CppGuess->new();
