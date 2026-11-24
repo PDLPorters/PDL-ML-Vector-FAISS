@@ -5,9 +5,17 @@ use ExtUtils::MakeMaker;
 use ExtUtils::CppGuess;
 use PDL::Core::Dev;
 
-if (!-f '/usr/include/faiss/IndexFlat.h') {
+my $faiss_inc;
+for my $dir ('/usr/include', '/usr/local/include', '/opt/homebrew/include') {
+    if (-f "$dir/faiss/IndexFlat.h") {
+        $faiss_inc = $dir;
+        last;
+    }
+}
+if (!$faiss_inc) {
     die "libfaiss-dev (faiss/IndexFlat.h) is required to build PDL::ML::Vector::FAISS.\n";
 }
+my $lib_flag = $faiss_inc =~ m{^/opt/homebrew} ? '-L/opt/homebrew/lib ' : '';
 
 my $pdl_inc      = PDL::Core::Dev::PDL_INCLUDE();
 my $guess        = ExtUtils::CppGuess->new();
@@ -34,8 +42,8 @@ WriteMakefile(
     PREREQ_PM => {
         'PDL' => '2.080',
     },
-    INC    => '-I. ' . $pdl_inc,
-    LIBS   => [ '-lfaiss -lgomp -lblas -llapack ' . $cpp_libs ],
+    INC    => '-I. ' . $pdl_inc . ' -I' . $faiss_inc,
+    LIBS   => [ $lib_flag . '-lfaiss -lgomp -lblas -llapack ' . $cpp_libs ],
     OBJECT => 'FAISS$(OBJ_EXT) faiss_bridge$(OBJ_EXT)',
     XS     => { 'FAISS.xs' => 'FAISS.c' },
     clean  => { FILES => 'PDL-ML-Vector-FAISS-* *.o FAISS.bs FAISS.c' },
@@ -62,6 +70,6 @@ CXX = $cpp_compiler
 CXXFLAGS = $cpp_flags -O2 -fPIC
 
 faiss_bridge\$(OBJ_EXT): faiss_bridge.cc faiss_bridge.h
-\t\$(CXX) \$(CXXFLAGS) -I. -c faiss_bridge.cc -o faiss_bridge\$(OBJ_EXT)
+\t\$(CXX) \$(CXXFLAGS) -I. -I$faiss_inc -c faiss_bridge.cc -o faiss_bridge\$(OBJ_EXT)
 END_MAKE
 }
