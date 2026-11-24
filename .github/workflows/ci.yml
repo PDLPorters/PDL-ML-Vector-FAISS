@@ -1,0 +1,62 @@
+name: perl
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  ci:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        perl-version: ['5.36']
+        include:
+          - perl-version: '5.40'
+            os: ubuntu-latest
+            release-test: true
+            coverage: true
+          - perl-version: '5.40'
+            os: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 'ci-dist: target-setup-perl'
+        uses: PDLPorters/devops/github-actions/ci-dist@master
+        with:
+          target-setup-perl: true
+          perl-version: ${{ matrix.perl-version }}
+      - name: Install PDL dependencies
+        uses: PDLPorters/devops/github-actions/install-dep-pdl-dep@master
+      - name: Install native dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libfaiss-dev libblas-dev liblapack-dev
+      - name: Install native dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install faiss
+      - name: 'ci-dist: target-all'
+        uses: PDLPorters/devops/github-actions/ci-dist@master
+        with:
+          target-setup-perl: false
+          target-install-dist-perl-deps: true
+          dist-perl-deps-configure: PDL ExtUtils::CppGuess
+          target-test-release-testing: true
+          target-test: true
+          test-enable-release-testing: ${{ matrix.release-test }}
+          test-enable-coverage: ${{ matrix.coverage }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-status:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: ${{ always() }}
+    needs: ['ci']
+    steps:
+      - uses: PDLPorters/devops/github-actions/irc-notifications@master
+        with:
+          target-build-status: true
+          needs: ${{ toJSON(needs) }}

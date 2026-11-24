@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v actionlint >/dev/null 2>&1 && [ -d .github/workflows ]; then
+  echo "=== [pre-push] Running actionlint ==="
+  actionlint .github/workflows/*.yml
+fi
+
+echo "=== [pre-push] Building & testing $(basename "$PWD") ==="
+perl Makefile.PL
+make -j"$(nproc 2>/dev/null || echo 2)"
+prove -j"$(nproc 2>/dev/null || echo 2)" -bv -It/lib t/
+make distclean >/dev/null 2>&1 || true
+echo "=== [pre-push] PASSED ==="

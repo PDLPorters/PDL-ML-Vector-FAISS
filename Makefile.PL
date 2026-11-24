@@ -2,17 +2,14 @@ use 5.010;
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
+use ExtUtils::CppGuess;
 use PDL::Core::Dev;
 
 if (!-f '/usr/include/faiss/IndexFlat.h') {
-    warn "libfaiss-dev (faiss/IndexFlat.h) is required to build PDL::ML::Vector::FAISS.\n";
-    exit 0;
+    die "libfaiss-dev (faiss/IndexFlat.h) is required to build PDL::ML::Vector::FAISS.\n";
 }
 
-my $pdl_inc = PDL::Core::Dev::PDL_INCLUDE();
-$pdl_inc =~ s/^"|"$//g;
-
-use ExtUtils::CppGuess;
+my $pdl_inc      = PDL::Core::Dev::PDL_INCLUDE();
 my $guess        = ExtUtils::CppGuess->new();
 my %cpp_opts     = $guess->makemaker_options();
 my $cpp_compiler = $guess->compiler_command() || 'g++';
@@ -37,8 +34,8 @@ WriteMakefile(
     PREREQ_PM => {
         'PDL' => '2.080',
     },
-    INC    => "-I. $pdl_inc",
-    LIBS   => ["-lfaiss -lgomp -lblas -llapack $cpp_libs"],
+    INC    => '-I. ' . $pdl_inc,
+    LIBS   => [ '-lfaiss -lgomp -lblas -llapack ' . $cpp_libs ],
     OBJECT => 'FAISS$(OBJ_EXT) faiss_bridge$(OBJ_EXT)',
     XS     => { 'FAISS.xs' => 'FAISS.c' },
     clean  => { FILES => 'PDL-ML-Vector-FAISS-* *.o FAISS.bs FAISS.c' },
@@ -47,11 +44,11 @@ WriteMakefile(
         resources   => {
             repository => {
                 type => 'git',
-                url  => 'https://github.com/GoogleCloudPlatform/google-auth-library-perl.git',
-                web  => 'https://github.com/GoogleCloudPlatform/google-auth-library-perl',
+                url  => 'https://github.com/PDLPorters/PDL-ML-Vector-FAISS.git',
+                web  => 'https://github.com/PDLPorters/PDL-ML-Vector-FAISS',
             },
             bugtracker => {
-                web => 'https://github.com/GoogleCloudPlatform/google-auth-library-perl/issues',
+                web => 'https://github.com/PDLPorters/PDL-ML-Vector-FAISS/issues',
             },
         },
     },
