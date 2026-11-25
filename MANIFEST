@@ -1,10 +1,13 @@
 Changes
 FAISS.xs
+LICENSE
+MANIFEST
+MANIFEST.SKIP
+Makefile.PL
+README.md
+examples/quickstart.pl
 faiss_bridge.cc
 faiss_bridge.h
 lib/PDL/ML/Vector/FAISS.pm
-Makefile.PL
-MANIFEST
-MANIFEST.SKIP
-README.md
 t/00-load.t
+t/02-tutorial-wolf-psort-knn.t

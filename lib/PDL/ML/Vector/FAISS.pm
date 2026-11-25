@@ -82,6 +82,51 @@ of dimension C<$dim>.
 
     $index = flat_ip($dim);
 
+=head1 TUTORIAL
+
+This tutorial translates the classic FAISS FlatL2 / FlatIP quickstart into
+idiomatic Perl/PDL: creating an exact index, adding database vectors, and
+running batched k-NN similarity search.
+
+In PDL, vector batches use C<(dim, n_vectors)> layout.
+
+    use strict;
+    use warnings;
+    use PDL;
+    use PDL::ML::Vector::FAISS qw(flat_l2 flat_ip);
+
+    my $dim = 4;
+
+    # 1. Build a small database of 4 vectors in R^4
+    my $db = float([
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]);
+
+    # 2. Exact L2 (Euclidean) index
+    my $l2 = flat_l2($dim);
+    $l2->add($db);
+    printf "L2 index: dim=%d, ntotal=%d\n", $l2->dim, $l2->ntotal;
+
+    my $queries = float([
+        [0.0, 0.9, 0.1, 0.0],
+        [0.1, 0.0, 0.0, 0.9],
+    ]);
+    my ($distances, $indices) = $l2->search($queries, 2);
+    print "L2 nearest neighbor indices:\n$indices\n";
+    print "L2 squared distances:\n$distances\n";
+
+    # 3. Exact Inner-Product (maximum inner product / cosine on unit vectors)
+    my $ip = flat_ip($dim);
+    $ip->add($db);
+    my ($scores, $ip_ids) = $ip->search(float([[0.0, 0.0, 2.0, 0.0]]), 2);
+    printf "IP top-1 index=%d score=%.2f\n", $ip_ids->at(0, 0), $scores->at(0, 0);
+
+See C<examples/quickstart.pl> in the distribution for a runnable version of this
+tutorial.
+
 =head1 TYPES
 
 Supports standard real numeric PDL types (C<byte>, C<short>, C<long>, C<longlong>, C<float>, C<double> as supported by the underlying library). Complex types (C<cfloat>, C<cdouble>) are not supported by this backend.
@@ -94,8 +139,11 @@ L<PDL>, L<PDL::Torch>, L<PDL::XGBoost>, L<PDL::ONNX>, L<PDL::GGML>
 
 C.J. Collier <cjac@google.com>
 
-=head1 LICENSE
+=head1 COPYRIGHT AND LICENSE
 
-Licensed under the Apache License, Version 2.0.
+Copyright 2026 Google LLC
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut

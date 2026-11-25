@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v actionlint >/dev/null 2>&1 && [ -d .github/workflows ]; then
+  echo "=== [pre-push] Running actionlint ==="
+  actionlint .github/workflows/*.yml
+fi
+
+echo "=== [pre-push] Building & testing $(basename "$PWD") ==="
+perl Makefile.PL
+make -j"$(nproc 2>/dev/null || echo 2)"
+prove -j"$(nproc 2>/dev/null || echo 2)" -bv -It/lib t/
+
+if perl -MTest::Kwalitee -e 1 2>/dev/null; then
+  echo "=== [pre-push] Running Kwalitee check ==="
+  make manifest >/dev/null 2>&1 || true
+  perl -MTest::Kwalitee -e 'kwalitee_ok()' || true
+fi
+
+make distclean >/dev/null 2>&1 || true
+echo "=== [pre-push] PASSED ==="

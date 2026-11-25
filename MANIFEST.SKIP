@@ -7,3 +7,14 @@
 ^FAISS\.bs$
 \.o$
 ^PDL-ML-Vector-FAISS-
+^\.git/
+^\.github/
+^\.gitignore$
+^dot-git/
+^_alien/
+\.bs$
+\.xsc$
+^lib/.*\.c$
+\.tar\.gz$
+~$
+\.bak$

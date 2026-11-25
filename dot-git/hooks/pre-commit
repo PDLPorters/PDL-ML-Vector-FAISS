@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== [pre-commit] Checking Perl syntax, POD, and Changes ==="
+for f in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(pm|pl|t|PL)$' || true); do
+  perl -Ilib -c "$f" >/dev/null
+done
+
+if [ -f Changes ] && perl -MTest::CPAN::Changes -e 1 2>/dev/null; then
+  perl -MTest::CPAN::Changes -e 'changes_ok()' >/dev/null
+fi
+
+if perl -MTest::Pod -e 1 2>/dev/null; then
+  perl -MTest::Pod -e 'all_pod_files_ok()' >/dev/null
+fi
+echo "=== [pre-commit] PASSED ==="
